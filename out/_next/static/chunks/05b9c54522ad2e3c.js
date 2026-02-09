@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,93790,e=>{"use strict";var n=e.i(43476);e.i(50711);var t=e.i(82045);let i=new t.ConvexReactClient("https://abundant-sardine-148.convex.cloud");function o({children:e}){return(0,n.jsx)(t.ConvexProvider,{client:i,children:e})}e.s(["ConvexClientProvider",()=>o])}]);
