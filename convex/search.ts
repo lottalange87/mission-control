@@ -61,16 +61,25 @@ export const createDocument = mutation({
   args: {
     title: v.string(),
     content: v.string(),
-    category: v.union(v.literal("memory"), v.literal("document"), v.literal("note")),
+    category: v.union(v.literal("memory"), v.literal("document"), v.literal("note"), v.literal("config"), v.literal("project")),
+    path: v.optional(v.string()),
     userId: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.any())),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
     const docId = await ctx.db.insert("documents", {
-      ...args,
+      title: args.title,
+      content: args.content,
+      category: args.category,
+      path: args.path ?? args.title,
+      hash: "", // Will be calculated by sync script if needed
+      size: args.content.length,
+      lastModified: now,
       createdAt: now,
       updatedAt: now,
+      userId: args.userId,
+      metadata: args.metadata,
     });
     return docId;
   },
@@ -79,7 +88,7 @@ export const createDocument = mutation({
 // Get documents by category
 export const getDocumentsByCategory = query({
   args: {
-    category: v.union(v.literal("memory"), v.literal("document"), v.literal("note")),
+    category: v.union(v.literal("memory"), v.literal("document"), v.literal("note"), v.literal("config"), v.literal("project")),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {

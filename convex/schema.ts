@@ -36,15 +36,20 @@ export default defineSchema({
   // Search index for memory/documents
   documents: defineTable({
     title: v.string(),
+    path: v.optional(v.string()), // Relative path from workspace root
     content: v.string(),
-    category: v.union(v.literal("memory"), v.literal("document"), v.literal("note")),
+    hash: v.optional(v.string()), // MD5 hash for change detection
+    category: v.union(v.literal("memory"), v.literal("document"), v.literal("note"), v.literal("config"), v.literal("project")),
+    size: v.optional(v.number()), // File size in bytes
     createdAt: v.number(),
     updatedAt: v.number(),
+    lastModified: v.optional(v.number()), // File system last modified timestamp
     userId: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.any())),
   })
     .index("by_category", ["category"])
     .index("by_createdAt", ["createdAt"])
+    .index("by_path", ["path"])
     .searchIndex("search_content", {
       searchField: "content",
     })
