@@ -16,7 +16,7 @@ export default function Dashboard() {
             <div>
               <h1 className="text-2xl font-bold">Mission Control <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full ml-2">v1.0</span></h1>
               <p className="text-sm text-muted-foreground">
-                Dashboard für Aktivitäten, Tasks und Suche
+                Lotta's Activity Dashboard
               </p>
             </div>
           </div>
