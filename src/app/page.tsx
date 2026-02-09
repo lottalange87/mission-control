@@ -1,6 +1,9 @@
+"use client";
+
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { CalendarView } from "@/components/CalendarView";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Rocket, Activity, Calendar, Search } from "lucide-react";
 
@@ -9,16 +12,19 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary rounded-lg">
-              <Rocket className="h-6 w-6 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary rounded-lg">
+                <Rocket className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Mission Control <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full ml-2">v1.0</span></h1>
+                <p className="text-sm text-muted-foreground">
+                  Lotta's Activity Dashboard 🚀
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Mission Control <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full ml-2">v1.0</span></h1>
-              <p className="text-sm text-muted-foreground">
-                Lotta's Activity Dashboard 🚀
-              </p>
-            </div>
+            <DarkModeToggle />
           </div>
         </div>
       </header>

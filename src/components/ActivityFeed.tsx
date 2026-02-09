@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,6 +30,7 @@ import {
   FileText,
   MessageSquare,
   Terminal,
+  Info,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -47,6 +55,7 @@ export function ActivityFeed() {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionType, setActionType] = useState<string>("all");
   const [limit, setLimit] = useState(20);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
 
   // Use real Convex queries
   const activities = useQuery(api.activities.getActivities, {
@@ -105,7 +114,8 @@ export function ActivityFeed() {
           {activities?.map((activity) => (
             <div
               key={activity._id}
-              className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              onClick={() => setSelectedActivity(activity)}
+              className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
             >
               <div
                 className={`p-2 rounded-md ${
@@ -147,6 +157,47 @@ export function ActivityFeed() {
             Mehr laden
           </Button>
         )}
+
+        {/* Activity Detail Dialog */}
+        <Dialog open={!!selectedActivity} onOpenChange={() => setSelectedActivity(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Info className="h-5 w-5" />
+                Aktivitätsdetails
+              </DialogTitle>
+              <DialogDescription>
+                Vollständige Informationen zu dieser Aktivität
+              </DialogDescription>
+            </DialogHeader>
+            {selectedActivity && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{selectedActivity.actionType}</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {format(selectedActivity.timestamp, "dd.MM.yyyy HH:mm:ss", { locale: de })}
+                  </span>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="font-medium">{selectedActivity.details}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Ergebnis:</span>
+                  {getResultIcon(selectedActivity.result)}
+                  <span className="text-sm">{selectedActivity.result}</span>
+                </div>
+                {selectedActivity.metadata && Object.keys(selectedActivity.metadata).length > 0 && (
+                  <div>
+                    <span className="text-sm text-muted-foreground">Metadaten:</span>
+                    <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-auto">
+                      {JSON.stringify(selectedActivity.metadata, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
