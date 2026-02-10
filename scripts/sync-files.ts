@@ -146,65 +146,58 @@ async function logToMissionControl(
 }
 
 /**
- * Call Convex mutation via HTTP
+ * Call Convex sync file mutation via HTTP site endpoint
  */
-async function convexMutation(
-  mutationPath: string,
-  args: Record<string, any>
-): Promise<any> {
-  const url = `${CONVEX_URL}/api/mutation`;
-  
-  // Try the Convex action/mutation format
+async function syncFileViaHTTP(args: Record<string, any>): Promise<any> {
+  const url = `${CONVEX_SITE_URL}/sync/file`;
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      path: mutationPath,
-      args,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(args),
   });
 
   const responseText = await response.text();
-  
   if (!response.ok) {
-    throw new Error(`Convex mutation failed: ${response.status} ${responseText}`);
+    throw new Error(`Sync file failed: ${response.status} ${responseText}`);
   }
-
-  // Convex returns the result directly
-  try {
-    return JSON.parse(responseText);
-  } catch {
-    return responseText;
-  }
+  try { return JSON.parse(responseText); } catch { return responseText; }
 }
 
 /**
- * Call Convex query via HTTP
+ * Get all synced paths via HTTP site endpoint
  */
-async function convexQuery(
-  queryPath: string,
-  args: Record<string, any>
-): Promise<any> {
-  const url = `${CONVEX_URL}/api/query`;
+async function getAllSyncedPathsViaHTTP(): Promise<Array<{ path: string; hash: string }>> {
+  const url = `${CONVEX_SITE_URL}/sync/files`;
   const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      path: queryPath,
-      args,
-    }),
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
   });
 
+  const responseText = await response.text();
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Convex query failed: ${response.status} ${errorText}`);
+    throw new Error(`Get synced paths failed: ${response.status} ${responseText}`);
   }
+  try {
+    const result = JSON.parse(responseText);
+    return Array.isArray(result) ? result : result?.value || [];
+  } catch { return []; }
+}
 
-  return await response.json();
+/**
+ * Delete a synced file via HTTP site endpoint
+ */
+async function deleteFileViaHTTP(filePath: string): Promise<any> {
+  const url = `${CONVEX_SITE_URL}/sync/file?path=${encodeURIComponent(filePath)}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(`Delete file failed: ${response.status} ${responseText}`);
+  }
+  try { return JSON.parse(responseText); } catch { return responseText; }
 }
 
 // ============================================================================
@@ -357,7 +350,7 @@ async function withRetry<T>(
 async function syncFileToConvex(
   file: FileInfo
 ): Promise<{ action: string; path: string }> {
-  const result = await convexMutation("sync/syncFile", {
+  const result = await syncFileViaHTTP({
     path: file.relativePath,
     content: file.content,
     hash: file.hash,
@@ -365,11 +358,6 @@ async function syncFileToConvex(
     lastModified: file.lastModified,
     size: file.size,
   });
-  
-  // Debug: log first few results
-  if (Math.random() < 0.1) {
-    console.log(`\nDebug: result for ${file.relativePath}:`, JSON.stringify(result));
-  }
 
   return { action: result?.action || "unknown", path: file.relativePath };
 }
@@ -378,10 +366,7 @@ async function syncFileToConvex(
  * Get all synced paths from Convex (for cleanup)
  */
 async function getSyncedPaths(): Promise<Array<{ path: string; hash: string }>> {
-  const result = await convexQuery("sync/getAllSyncedPaths", {});
-  // Handle Convex response format - result might be wrapped in a value field
-  const paths = Array.isArray(result) ? result : result?.value || [];
-  return paths;
+  return await getAllSyncedPathsViaHTTP();
 }
 
 /**
@@ -390,8 +375,8 @@ async function getSyncedPaths(): Promise<Array<{ path: string; hash: string }>> 
 async function deleteFileFromConvex(
   filePath: string
 ): Promise<boolean> {
-  const result = await convexMutation("sync/deleteFile", { path: filePath });
-  return result.deleted;
+  const result = await deleteFileViaHTTP(filePath);
+  return result?.deleted || false;
 }
 
 /**
