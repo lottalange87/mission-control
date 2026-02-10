@@ -78,6 +78,25 @@ export const getActivityStats = query({
   },
 });
 
+// Get last workspace sync activity
+export const getLastSync = query({
+  args: {},
+  handler: async (ctx) => {
+    const sync = await ctx.db
+      .query("activities")
+      .withIndex("by_actionType", (q) => q.eq("actionType", "workspace_sync"))
+      .order("desc")
+      .first();
+
+    if (!sync) return null;
+    return {
+      timestamp: sync.timestamp,
+      details: sync.details,
+      result: sync.result,
+    };
+  },
+});
+
 // Get unique action types
 export const getActionTypes = query({
   args: {},

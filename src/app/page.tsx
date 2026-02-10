@@ -4,6 +4,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { CalendarView } from "@/components/CalendarView";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
+import { SyncStatus } from "@/components/SyncStatus";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Rocket, Activity, Calendar, Search } from "lucide-react";
 
@@ -24,7 +25,10 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <DarkModeToggle />
+            <div className="flex items-center gap-4">
+              <SyncStatus />
+              <DarkModeToggle />
+            </div>
           </div>
         </div>
       </header>
