@@ -8,12 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Search,
   FileText,
   Activity,
   CheckSquare,
   Clock,
   ExternalLink,
+  FolderOpen,
+  Copy,
+  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -54,6 +63,23 @@ function highlightText(text: string, query: string) {
 export function GlobalSearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
+  const handleItemClick = (item: any, type: string) => {
+    setSelectedItem(item);
+    setSelectedType(type);
+  };
+
+  const handleCopy = async () => {
+    const text = selectedType === "activity" ? selectedItem.details :
+                 selectedType === "document" ? selectedItem.content :
+                 selectedItem.description || selectedItem.title;
+    await navigator.clipboard.writeText(text || "");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Use real Convex query
   const searchResults = useQuery(api.search.globalSearch, 
@@ -91,7 +117,10 @@ export function GlobalSearch() {
     const colorClass = categoryColors[type];
 
     return (
-      <div className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
+      <div
+        className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+        onClick={() => handleItemClick(item, type)}
+      >
         <div className={`p-2 rounded-md ${colorClass}`}>{Icon}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -199,6 +228,64 @@ export function GlobalSearch() {
           </Tabs>
         )}
       </CardContent>
+
+      {/* Detail Dialog */}
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                {selectedType === "document" && <FileText className="h-5 w-5" />}
+                {selectedType === "activity" && <Activity className="h-5 w-5" />}
+                {selectedType === "task" && <CheckSquare className="h-5 w-5" />}
+                {selectedType === "document" ? selectedItem?.title :
+                 selectedType === "activity" ? selectedItem?.actionType :
+                 selectedItem?.title}
+              </DialogTitle>
+            </div>
+            {selectedItem && (
+              <div className="flex items-center gap-2 flex-wrap mt-1">
+                <Badge variant="outline" className="text-xs capitalize">{selectedType}</Badge>
+                {selectedType === "document" && selectedItem.category && (
+                  <Badge variant="secondary" className="text-xs">{selectedItem.category}</Badge>
+                )}
+                {selectedType === "document" && selectedItem.path && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <FolderOpen className="h-3 w-3" />
+                    {selectedItem.path}
+                  </span>
+                )}
+                {(selectedItem.timestamp || selectedItem.createdAt || selectedItem.scheduledAt) && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {format(selectedItem.timestamp || selectedItem.createdAt || selectedItem.scheduledAt, "dd.MM.yyyy HH:mm", { locale: de })}
+                  </span>
+                )}
+                <button
+                  onClick={handleCopy}
+                  className="ml-auto text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied ? "Kopiert!" : "Kopieren"}
+                </button>
+              </div>
+            )}
+          </DialogHeader>
+          <div className="flex-1 overflow-auto mt-2 rounded-lg bg-muted/50 p-4">
+            <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed">
+              {selectedType === "activity" && selectedItem?.details}
+              {selectedType === "document" && selectedItem?.content}
+              {selectedType === "task" && (selectedItem?.description || selectedItem?.title)}
+            </pre>
+          </div>
+          {selectedType === "document" && selectedItem?.size && (
+            <div className="text-xs text-muted-foreground mt-2">
+              {(selectedItem.size / 1024).toFixed(1)} KB
+              {selectedItem.updatedAt && ` · Aktualisiert: ${format(selectedItem.updatedAt, "dd.MM.yyyy HH:mm", { locale: de })}`}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
