@@ -217,6 +217,24 @@ export const getAllSyncedPaths = query({
 });
 
 /**
+ * Cleanup legacy documents without a path field
+ */
+export const cleanupLegacyDocs = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allDocs = await ctx.db.query("documents").collect();
+    let deleted = 0;
+    for (const doc of allDocs) {
+      if (!doc.path) {
+        await ctx.db.delete(doc._id);
+        deleted++;
+      }
+    }
+    return { deleted };
+  },
+});
+
+/**
  * Batch sync multiple files
  */
 export const syncFilesBatch = mutation({

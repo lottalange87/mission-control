@@ -155,4 +155,41 @@ http.route({
   }),
 });
 
+// Cron Job Sync
+http.route({
+  path: "/sync/cron",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { jobs } = body;
+
+    if (!jobs || !Array.isArray(jobs)) {
+      return new Response(
+        JSON.stringify({ error: "Missing jobs array" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const result = await ctx.runMutation(api.sync.syncCronJobs, { jobs });
+
+    return new Response(
+      JSON.stringify(result),
+      { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+    );
+  }),
+});
+
+// Cleanup: delete documents without a path (legacy entries)
+http.route({
+  path: "/sync/cleanup",
+  method: "POST",
+  handler: httpAction(async (ctx) => {
+    const result = await ctx.runMutation(api.sync.cleanupLegacyDocs, {});
+    return new Response(
+      JSON.stringify(result),
+      { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+    );
+  }),
+});
+
 export default http;
